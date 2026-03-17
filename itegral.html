@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Интегрирование x²: Трапеции vs Прямоугольники</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .container {
+            display: flex;
+            gap: 15px;
+            margin: 15px 20px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 80px;
+        }
+
+        button {
+            padding: 8px 20px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .label {
+            font-weight: bold;
+            min-width: 150px;
+        }
+
+        .results {
+            gap: 20px;
+            margin: 20px;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-radius: 4px;
+            flex: 1;
+            border-left: 5px solid;
+        }
+
+        .trap-res {
+            background: #eef6ff;
+            border-color: #007bff;
+        }
+
+        .rect-res {
+            background: #fff5ee;
+            border-color: #ff4500;
+        }
+
+        .graphs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            background: white;
+            width: 48%;
+            min-width: 450px;
+            border-radius: 4px;
+        }
+
+        h3 {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <strong>f(x) = x²</strong>
+    </div>
+
+    <div class="container">
+        <div class="label">Отрезок [x0, xn]:</div>
+        <div class="input-group">
+            <input type="number" id="x0" value="2">
+            <input type="number" id="xn" value="6">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="label">Разбиений (n):</div>
+        <div class="input-group">
+            <input type="number" id="n_steps" value="10" min="1" max="500">
+            <button onclick="calculate()">Ок</button>
+        </div>
+    </div>
+
+    <div class="results">
+        <div class="result-item trap-res">
+            <strong>Метод трапеций:</strong> <span id="res_trap">0</span>
+        </div>
+        <div class="result-item rect-res">
+            <strong>Метод прямоугольников:</strong> <span id="res_rect">0</span>
+        </div>
+    </div>
+
+    <div class="graphs">
+        <div>
+            <h3>Метод трапеций</h3>
+            <canvas id="graph-trap" width="500" height="350"></canvas>
+        </div>
+        <div>
+            <h3>Метод прямоугольников</h3>
+            <canvas id="graph-rect" width="500" height="350"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const f = x => x ** 2;
+
+        function fun(n, x0, xn) {
+            const h = (xn - x0) / n
+            let s = 0
+
+            for (let i = 0; i < n; i++) {
+                let ss
+                let xx = x0 + h
+                if (x0 ** 2 < xx ** 2) {
+                    ss = h * x0 ** 2 + Math.abs(x0 ** 2 - xx ** 2) * h / 2
+                } else {
+                    ss = h * xx ** 2 + Math.abs(x0 ** 2 - xx ** 2) * h / 2
+                }
+                x0 = xx
+                s += ss
+            }
+            return s
+        }
+
+        function fun1(n, x0, xn) {
+            const h = (xn - x0) / n
+            let s = 0
+
+            for (let i = 0; i < n; i++) {
+                let ss = h * (x0 + h) ** 2
+                x0 += h
+                s += ss
+            }
+            return s
+        }
+
+        function calculate() {
+            const n = parseInt(document.getElementById('n_steps').value);
+            const x0_val = parseFloat(document.getElementById('x0').value);
+            const xn_val = parseFloat(document.getElementById('xn').value);
+
+            const resultTrap = fun(n, x0_val, xn_val);
+            const resultRect = fun1(n, x0_val, xn_val);
+
+            document.getElementById('res_trap').innerText = resultTrap.toFixed(4);
+            document.getElementById('res_rect').innerText = resultRect.toFixed(4);
+
+            draw(n, x0_val, xn_val, 'graph-trap', 'trap');
+            draw(n, x0_val, xn_val, 'graph-rect', 'rect');
+        }
+
+        function draw(n, x0, xn, canvasId, method) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const pad = 40;
+            const minX = Math.min(x0, 0) - 1;
+            const maxX = Math.max(xn, 1) + 1;
+            const maxY = Math.pow(maxX, 2) * 1.1;
+
+            const scaleX = (w - 2 * pad) / (maxX - minX);
+            const scaleY = (h - 2 * pad) / maxY;
+            const getX = (v) => pad + (v - minX) * scaleX;
+            const getY = (v) => h - pad - (v * scaleY);
+
+            ctx.strokeStyle = '#ccc';
+            ctx.beginPath();
+            ctx.moveTo(0, getY(0)); ctx.lineTo(w, getY(0));
+            ctx.moveTo(getX(0), 0); ctx.lineTo(getX(0), h);
+            ctx.stroke();
+
+            const dx = (xn - x0) / n;
+            for (let i = 0; i < n; i++) {
+                let cx = x0 + i * dx;
+                let nx = cx + dx;
+
+                ctx.beginPath();
+                if (method === 'trap') {
+                    ctx.fillStyle = 'rgba(0, 123, 255, 0.2)';
+                    ctx.strokeStyle = '#007bff';
+                    ctx.moveTo(getX(cx), getY(0));
+                    ctx.lineTo(getX(cx), getY(f(cx)));
+                    ctx.lineTo(getX(nx), getY(f(nx)));
+                    ctx.lineTo(getX(nx), getY(0));
+                } else {
+                    ctx.fillStyle = 'rgba(255, 69, 0, 0.2)';
+                    ctx.strokeStyle = '#ff4500';
+                    ctx.rect(getX(cx), getY(f(nx)), (nx - cx) * scaleX, f(nx) * scaleY);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = minX; x <= maxX; x += 0.1) {
+                ctx.lineTo(getX(x), getY(f(x)));
+            }
+            ctx.stroke();
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            margin: 20px;
+            font-family: sans-serif;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 60px;
+        }
+
+        .full-width {
+            width: 100%;
+            max-width: 150px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            height: fit-content;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .label {
+            align-self: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="grid" class="grid-container">
+        <div class="label">Кол-во точек (n):</div>
+        <div class="input-group">
+            <input type="number" id="count_n" class="full-width">
+            <button onclick="step2(this)">OK</button>
+        </div>
+    </div>
+
+    <script>
+        let N = 0
+
+        function fun(n, uzl, fuzl, x) {
+            let lx = 0
+            for (let i = 0; i < n; i++) {
+                let num = 1, den = 1
+                for (let j = 0; j < n; j++) {
+                    if (j !== i) {
+                        num *= x - uzl[j]
+                        den *= uzl[i] - uzl[j]
+                    }
+                }
+                lx += fuzl[i] * (num / den)
+            }
+            return lx
+        }
+
+        function step2(btn) {
+            N = parseInt(document.getElementById('count_n').value)
+            btn.disabled = true
+
+            const grid = document.getElementById('grid')
+            let inputsHtml = ''
+            for (let i = 0; i < N; i++) {
+                inputsHtml += `<input type="number" class="uzl-val">`
+            }
+
+            grid.insertAdjacentHTML('beforeend',
+                `<div class="label">Узлы (x):</div>
+                <div class="input-group">${inputsHtml} <button onclick="step3(this)">OK</button></div>`
+            )
+        }
+
+        function step3(btn) {
+            btn.disabled = true
+            const grid = document.getElementById('grid')
+            let inputsHtml = ''
+            for (let i = 0; i < N; i++) {
+                inputsHtml += `<input type="number" class="fuzl-val">`
+            }
+
+            grid.insertAdjacentHTML('beforeend',
+                `<div class="label">Значения (f(x)):</div>
+                <div class="input-group">${inputsHtml} <button onclick="step4(this)">OK</button></div>`
+            )
+        }
+
+        function step4(btn) {
+            btn.disabled = true
+            const grid = document.getElementById('grid')
+            grid.insertAdjacentHTML('beforeend',
+                `<div class="label">Точка x:</div>
+                <div class="input-group">
+                    <input type="number" id="target_x" class="full-width">
+                    <button onclick="calculate(this)">OK</button>
+                </div>`
+            )
+        }
+
+        function calculate(btn) {
+            btn.disabled = true
+            const uzl = Array.from(document.querySelectorAll('.uzl-val')).map(i => Number(i.value))
+            const fuzl = Array.from(document.querySelectorAll('.fuzl-val')).map(i => Number(i.value))
+            const x = Number(document.getElementById('target_x').value)
+
+            const res = fun(N, uzl, fuzl, x)
+
+            document.getElementById('grid').insertAdjacentHTML('beforeend',
+                `<div class="label">Результат L(x):</div>
+                <div class="input-group"><input type="text" class="full-width" value="${res.toFixed(4)}" readonly></div>`
+            )
+        }
+    </script>
+</body>
+
+</html>

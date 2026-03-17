@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .container {
+            display: flex;
+            gap: 15px;
+            margin: 20px;
+            font-family: sans-serif;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .label {
+            align-self: center;
+            font-weight: bold;
+            min-width: 150px;
+        }
+
+        #result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            display: none;
+        }
+
+        #graph-container {
+            margin: 20px;
+            border: 1px solid #ddd;
+            background: white;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container label">f(x) = sin(x)</div>
+
+    <div class="container">
+        <div class="label">Точность (e):</div>
+        <div class="input-group">
+            <input type="number" id="input_e" value="0.1" step="0.01">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="label">Точка х:</div>
+        <div class="input-group">
+            <input type="number" id="input_x" value="1" step="0.1">
+            <button onclick="calculate()">Рассчитать</button>
+        </div>
+    </div>
+
+    <div id="result-box" class="container">
+        <div>
+            <strong>Результат L(x):</strong> <span id="res_val"></span><br>
+            <strong>Эталон sin(x):</strong> <span id="real_val"></span>
+        </div>
+    </div>
+
+    <canvas id="graph-container" width="1000" height="400"></canvas>
+
+    <script>
+        function fun(e, xx) {
+            let n = 0;
+            let kList = [];
+            let xList = [];
+            let fx = [];
+
+            while (1 / Math.pow(2, n) > e) {
+                kList.push(n);
+                n++;
+            }
+
+            for (let k of kList) {
+                let x = Math.cos((Math.PI * (1 + 2 * k)) / (2 * kList.length));
+                xList.push(x);
+            }
+
+            for (let x of xList) {
+                fx.push(Math.sin(x));
+            }
+
+            let lx = 0;
+            for (let i = 0; i < n; i++) {
+                let num = 1;
+                let den = 1;
+                for (let j = 0; j < n; j++) {
+                    if (j !== i) {
+                        num *= xx - xList[j];
+                        den *= xList[i] - xList[j];
+                    }
+                }
+                lx += fx[i] * (num / den);
+            }
+
+            return lx;
+        }
+
+        function calculate() {
+            const e = parseFloat(document.getElementById('input_e').value);
+            const x = parseFloat(document.getElementById('input_x').value);
+            const res = fun(e, x);
+            document.getElementById('result-box').style.display = 'flex';
+            document.getElementById('res_val').innerText = res.toFixed(6);
+            document.getElementById('real_val').innerText = Math.sin(x).toFixed(6);
+            drawGraph(e, x);
+        }
+
+        function drawGraph(e, targetX) {
+            const canvas = document.getElementById('graph-container');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const scaleX = w / (2.5 * Math.PI);
+            const scaleY = h / 3;
+            const offsetX = w / 2;
+            const offsetY = h / 2;
+
+            ctx.strokeStyle = '#bbb';
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.beginPath();
+            ctx.moveTo(0, offsetY); ctx.lineTo(w, offsetY);
+            ctx.moveTo(offsetX, 0); ctx.lineTo(offsetX, h);
+            ctx.stroke();
+
+            const ticksX = [
+                { val: -Math.PI, label: '-π' },
+                { val: -Math.PI / 2, label: '-π/2' },
+                { val: Math.PI / 2, label: 'π/2' },
+                { val: Math.PI, label: 'π' }
+            ];
+            ticksX.forEach(t => {
+                let x = offsetX + t.val * scaleX;
+                ctx.beginPath();
+                ctx.moveTo(x, offsetY - 5); ctx.lineTo(x, offsetY + 5);
+                ctx.stroke();
+                ctx.fillText(t.label, x - 10, offsetY + 20);
+            });
+
+            const ticksY = [1, -1];
+            ticksY.forEach(val => {
+                let y = offsetY - val * scaleY;
+                ctx.beginPath();
+                ctx.moveTo(offsetX - 5, y); ctx.lineTo(offsetX + 5, y);
+                ctx.stroke();
+                ctx.fillText(val, offsetX + 10, y + 5);
+            });
+
+            ctx.strokeStyle = 'rgba(0, 0, 255, 0.3)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            for (let px = 0; px < w; px++) {
+                let x = (px - offsetX) / scaleX;
+                let py = offsetY - Math.sin(x) * scaleY;
+                px === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            ctx.strokeStyle = 'red';
+            ctx.setLineDash([]);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let px = 0; px < w; px++) {
+                let x = (px - offsetX) / scaleX;
+                let py = offsetY - fun(e, x) * scaleY;
+                if (py < 0 || py > h) { ctx.moveTo(px, py); continue; }
+                px === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            let pX = offsetX + targetX * scaleX;
+            let pY = offsetY - fun(e, targetX) * scaleY;
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(pX, pY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.stroke();
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+
+</html>
