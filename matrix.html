@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Матриц</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.active {
+            background-color: #28a745;
+        }
+
+        .matrix-setup {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .matrix-box {
+            flex: 1;
+            min-width: 250px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            margin-top: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-left: 4px solid #dc3545;
+            background: #fdf2f2;
+            display: none;
+            white-space: pre-line;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-left: 4px solid #28a745;
+            background: #f4fbf6;
+            display: none;
+            white-space: pre-line;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Калькулятор Матриц</h2>
+
+        <div class="menu">
+            <button onclick="setOperation('add', this)" class="active">Сложение</button>
+            <button onclick="setOperation('sub', this)">Вычитание</button>
+            <button onclick="setOperation('mult', this)">Умножение</button>
+            <button onclick="setOperation('inv', this)">Обратная матрица</button>
+        </div>
+
+        <div class="matrix-setup">
+            <div class="matrix-box" id="boxA">
+                <h3>Матрица A</h3>
+                <textarea id="inputA" placeholder="1 2 3&#10;4 5 6&#10;7 8 9"></textarea>
+            </div>
+
+            <div class="matrix-box" id="boxB">
+                <h3>Матрица B</h3>
+                <textarea id="inputB" placeholder="9 8 7&#10;6 5 4&#10;3 2 1"></textarea>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <button onclick="processMatrices()" style="font-size: 16px; padding: 12px 25px;">Вычислить</button>
+        </div>
+
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success">
+            <span id="successTitle" style="display: block; margin-bottom: 5px;"></span>
+            <textarea id="outputResult" readonly
+                style="height: 150px; background-color: #f8f9fa; border: 1px solid #28a745; margin-top: 5px;"></textarea>
+        </div>
+    </div>
+    <script>
+        let currentOperation = 'add';
+
+        function setOperation(op, button) {
+            currentOperation = op;
+            document.querySelectorAll('.menu button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const boxB = document.getElementById('boxB');
+            if (op === 'inv') {
+                boxB.style.display = 'none';
+            } else {
+                boxB.style.display = 'block';
+            }
+            hideMessages();
+        }
+
+        function parseMatrix(text, matrixName) {
+            const lines = text.trim().split('\n');
+            const matrix = [];
+            let expectedCols = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const rowValues = line.split(/\s+/).map(Number);
+                if (rowValues.some(isNaN)) {
+                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): строка содержит нечисловые элементы.`);
+                }
+
+                if (expectedCols === null) {
+                    expectedCols = rowValues.length;
+                } else if (rowValues.length !== expectedCols) {
+                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): количество элементов (${rowValues.length}) не совпадает с первой строкой (${expectedCols}).`);
+                }
+
+                matrix.push(rowValues);
+            }
+
+            if (matrix.length === 0) {
+                throw new Error(`Матрица ${matrixName} пуста.`);
+            }
+
+            return matrix;
+        }
+
+        function sum(mat1, mat2) {
+            let mat3 = [];
+            for (let i = 0; i < mat1.length; i++) {
+                mat3[i] = [];
+                for (let j = 0; j < mat1[i].length; j++) {
+                    mat3[i][j] = mat1[i][j] + mat2[i][j];
+                }
+            }
+            return mat3;
+        }
+
+        function minis(mat1, mat2) {
+            let mat3 = [];
+            for (let i = 0; i < mat1.length; i++) {
+                mat3[i] = [];
+                for (let j = 0; j < mat1[i].length; j++) {
+                    mat3[i][j] = mat1[i][j] - mat2[i][j];
+                }
+            }
+            return mat3;
+        }
+
+        function mul(mat1, mat2) {
+            let mat3 = [];
+            let rows1 = mat1.length;
+            let cols1 = mat1[0].length;
+            let cols2 = mat2[0].length;
+
+            for (let i = 0; i < rows1; i++) {
+                mat3[i] = [];
+                for (let j = 0; j < cols2; j++) {
+                    let s = 0;
+                    for (let q = 0; q < cols1; q++) {
+                        s += mat1[i][q] * mat2[q][j];
+                    }
+                    mat3[i][j] = s;
+                }
+            }
+            return mat3;
+        }
+
+        function opred(mat) {
+            const n = mat.length;
+            if (n === 1) {
+                return mat[0][0];
+            }
+            if (n === 2) {
+                return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+            }
+            let det = 0;
+
+            for (let j = 0; j < n; j++) {
+                let subMat = [];
+                for (let row = 1; row < n; row++) {
+                    let minRow = [];
+                    for (let col = 0; col < n; col++) {
+                        if (col !== j) {
+                            minRow.push(mat[row][col]);
+                        }
+                    }
+                    subMat.push(minRow);
+                }
+                let sign = Math.pow(-1, j);
+                det += sign * mat[0][j] * opred(subMat);
+            }
+
+            return det;
+        }
+
+        function minor(mat, m, k) {
+            let minMat = [];
+            for (let i = 0; i < mat.length; i++) {
+                if (i === m) continue;
+                let row = [];
+                for (let j = 0; j < mat[i].length; j++) {
+                    if (j === k) continue;
+                    row.push(mat[i][j]);
+                }
+                minMat.push(row);
+            }
+            return minMat;
+        }
+
+        function inverse(mat) {
+            const det = opred(mat);
+
+            if (det === 0) {
+                throw new Error("Обратная матрица не существует, так как определитель равен 0.");
+            }
+
+            const n = mat.length;
+
+            if (n === 1) {
+                return [[1 / mat[0][0]]];
+            }
+
+            let mm = [];
+            for (let i = 0; i < n; i++) {
+                mm.push(new Array(n));
+            }
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const subMat = minor(mat, i, j);
+                    const sign = Math.pow(-1, i + j);
+                    const mmValue = sign * opred(subMat);
+                    mm[j][i] = mmValue;
+                }
+            }
+
+            let invMat = [];
+            for (let i = 0; i < n; i++) {
+                let row = [];
+                for (let j = 0; j < n; j++) {
+                    row.push(mm[i][j] / det);
+                }
+                invMat.push(row);
+            }
+
+            return invMat;
+        }
+
+        function formatMatrixHTML(matrix) {
+            return matrix.map(row =>
+                row.map(num => {
+                    let rounded = Number(num.toFixed(4));
+                    return rounded === 0 ? 0 : rounded;
+                }).join(' ')
+            ).join('\n');
+        }
+
+        function processMatrices() {
+            hideMessages();
+
+            try {
+                const textA = document.getElementById('inputA').value;
+                const matrixA = parseMatrix(textA, 'A');
+                const rowsA = matrixA.length;
+                const colsA = matrixA[0].length;
+
+                let resultMatrix = null;
+                let titleText = '';
+
+                if (currentOperation !== 'inv') {
+                    const textB = document.getElementById('inputB').value;
+                    const matrixB = parseMatrix(textB, 'B');
+                    const rowsB = matrixB.length;
+                    const colsB = matrixB[0].length;
+
+                    if (currentOperation === 'add' || currentOperation === 'sub') {
+                        if (rowsA !== rowsB || colsA !== colsB) {
+                            throw new Error(`Математическая ошибка: Для сложения/вычитания матрицы должны быть одинакового размера! (А: ${rowsA}x${colsA}, В: ${rowsB}x${colsB})`);
+                        }
+                        if (currentOperation === 'add') {
+                            resultMatrix = sum(matrixA, matrixB);
+                            titleText = 'Результат сложения (A + B):';
+                        } else {
+                            resultMatrix = minis(matrixA, matrixB);
+                            titleText = 'Результат вычитания (A - B):';
+                        }
+                    }
+
+                    if (currentOperation === 'mult') {
+                        if (colsA !== rowsB) {
+                            throw new Error(`Математическая ошибка: Количество столбцов матрицы А (${colsA}) должно быть равно количеству строк матрицы В (${rowsB})!`);
+                        }
+                        resultMatrix = mul(matrixA, matrixB);
+                        titleText = 'Результат умножения (A * B):';
+                    }
+                } else {
+                    if (rowsA !== colsA) {
+                        throw new Error(`Математическая ошибка: Обратная матрица существует только для КВАДРАТНЫХ матриц! (Размер А: ${rowsA}x${colsA})`);
+                    }
+                    resultMatrix = inverse(matrixA);
+                    titleText = `Определитель матрицы A = ${opred(matrixA)}`;
+                }
+
+                showSuccess(titleText, formatMatrixHTML(resultMatrix));
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMessage');
+            errDiv.innerText = msg;
+            errDiv.style.display = 'block';
+        }
+
+        function showSuccess(title, matrixText) {
+            document.getElementById('successTitle').innerText = title;
+            document.getElementById('outputResult').value = matrixText;
+            document.getElementById('successMessage').style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
