@@ -139,251 +139,251 @@
         </div>
     </div>
     <script>
-        let currentOperation = 'add';
+        let currentOperation = 'add'
 
         function setOperation(op, button) {
-            currentOperation = op;
-            document.querySelectorAll('.menu button').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
+            currentOperation = op
+            document.querySelectorAll('.menu button').forEach(btn => btn.classList.remove('active'))
+            button.classList.add('active')
 
-            const boxB = document.getElementById('boxB');
+            const boxB = document.getElementById('boxB')
             if (op === 'inv') {
-                boxB.style.display = 'none';
+                boxB.style.display = 'none'
             } else {
-                boxB.style.display = 'block';
+                boxB.style.display = 'block'
             }
-            hideMessages();
+            hideMessages()
         }
 
         function parseMatrix(text, matrixName) {
-            const lines = text.trim().split('\n');
-            const matrix = [];
-            let expectedCols = null;
+            const lines = text.trim().split('\n')
+            const matrix = []
+            let expectedCols = null
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
+                const line = lines[i].trim()
+                if (!line) continue
 
-                const rowValues = line.split(/\s+/).map(Number);
+                const rowValues = line.split(/\s+/).map(Number)
                 if (rowValues.some(isNaN)) {
-                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): строка содержит нечисловые элементы.`);
+                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): строка содержит нечисловые элементы.`)
                 }
 
                 if (expectedCols === null) {
-                    expectedCols = rowValues.length;
+                    expectedCols = rowValues.length
                 } else if (rowValues.length !== expectedCols) {
-                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): количество элементов (${rowValues.length}) не совпадает с первой строкой (${expectedCols}).`);
+                    throw new Error(`Ошибка в матрице ${matrixName} (строка ${i + 1}): количество элементов (${rowValues.length}) не совпадает с первой строкой (${expectedCols}).`)
                 }
 
-                matrix.push(rowValues);
+                matrix.push(rowValues)
             }
 
             if (matrix.length === 0) {
-                throw new Error(`Матрица ${matrixName} пуста.`);
+                throw new Error(`Матрица ${matrixName} пуста.`)
             }
 
-            return matrix;
+            return matrix
         }
 
         function sum(mat1, mat2) {
-            let mat3 = [];
+            let mat3 = []
             for (let i = 0; i < mat1.length; i++) {
-                mat3[i] = [];
+                mat3[i] = []
                 for (let j = 0; j < mat1[i].length; j++) {
-                    mat3[i][j] = mat1[i][j] + mat2[i][j];
+                    mat3[i][j] = mat1[i][j] + mat2[i][j]
                 }
             }
-            return mat3;
+            return mat3
         }
 
         function minis(mat1, mat2) {
-            let mat3 = [];
+            let mat3 = []
             for (let i = 0; i < mat1.length; i++) {
-                mat3[i] = [];
+                mat3[i] = []
                 for (let j = 0; j < mat1[i].length; j++) {
-                    mat3[i][j] = mat1[i][j] - mat2[i][j];
+                    mat3[i][j] = mat1[i][j] - mat2[i][j]
                 }
             }
-            return mat3;
+            return mat3
         }
 
         function mul(mat1, mat2) {
-            let mat3 = [];
-            let rows1 = mat1.length;
-            let cols1 = mat1[0].length;
-            let cols2 = mat2[0].length;
+            let mat3 = []
+            let rows1 = mat1.length
+            let cols1 = mat1[0].length
+            let cols2 = mat2[0].length
 
             for (let i = 0; i < rows1; i++) {
-                mat3[i] = [];
+                mat3[i] = []
                 for (let j = 0; j < cols2; j++) {
-                    let s = 0;
+                    let s = 0
                     for (let q = 0; q < cols1; q++) {
-                        s += mat1[i][q] * mat2[q][j];
+                        s += mat1[i][q] * mat2[q][j]
                     }
-                    mat3[i][j] = s;
+                    mat3[i][j] = s
                 }
             }
-            return mat3;
+            return mat3
         }
 
         function opred(mat) {
-            const n = mat.length;
+            const n = mat.length
             if (n === 1) {
-                return mat[0][0];
+                return mat[0][0]
             }
             if (n === 2) {
-                return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+                return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]
             }
-            let det = 0;
+            let det = 0
 
             for (let j = 0; j < n; j++) {
-                let subMat = [];
+                let subMat = []
                 for (let row = 1; row < n; row++) {
-                    let minRow = [];
+                    let minRow = []
                     for (let col = 0; col < n; col++) {
                         if (col !== j) {
-                            minRow.push(mat[row][col]);
+                            minRow.push(mat[row][col])
                         }
                     }
-                    subMat.push(minRow);
+                    subMat.push(minRow)
                 }
-                let sign = Math.pow(-1, j);
-                det += sign * mat[0][j] * opred(subMat);
+                let sign = Math.pow(-1, j)
+                det += sign * mat[0][j] * opred(subMat)
             }
 
-            return det;
+            return det
         }
 
         function minor(mat, m, k) {
-            let minMat = [];
+            let minMat = []
             for (let i = 0; i < mat.length; i++) {
-                if (i === m) continue;
-                let row = [];
+                if (i === m) continue
+                let row = []
                 for (let j = 0; j < mat[i].length; j++) {
-                    if (j === k) continue;
-                    row.push(mat[i][j]);
+                    if (j === k) continue
+                    row.push(mat[i][j])
                 }
-                minMat.push(row);
+                minMat.push(row)
             }
-            return minMat;
+            return minMat
         }
 
         function inverse(mat) {
-            const det = opred(mat);
+            const det = opred(mat)
 
             if (det === 0) {
-                throw new Error("Обратная матрица не существует, так как определитель равен 0.");
+                throw new Error("Обратная матрица не существует, так как определитель равен 0.")
             }
 
-            const n = mat.length;
+            const n = mat.length
 
             if (n === 1) {
-                return [[1 / mat[0][0]]];
+                return [[1 / mat[0][0]]]
             }
 
-            let mm = [];
+            let mm = []
             for (let i = 0; i < n; i++) {
-                mm.push(new Array(n));
+                mm.push(new Array(n))
             }
 
             for (let i = 0; i < n; i++) {
                 for (let j = 0; j < n; j++) {
-                    const subMat = minor(mat, i, j);
-                    const sign = Math.pow(-1, i + j);
-                    const mmValue = sign * opred(subMat);
-                    mm[j][i] = mmValue;
+                    const subMat = minor(mat, i, j)
+                    const sign = Math.pow(-1, i + j)
+                    const mmValue = sign * opred(subMat)
+                    mm[j][i] = mmValue
                 }
             }
 
-            let invMat = [];
+            let invMat = []
             for (let i = 0; i < n; i++) {
-                let row = [];
+                let row = []
                 for (let j = 0; j < n; j++) {
-                    row.push(mm[i][j] / det);
+                    row.push(mm[i][j] / det)
                 }
-                invMat.push(row);
+                invMat.push(row)
             }
 
-            return invMat;
+            return invMat
         }
 
         function formatMatrixHTML(matrix) {
             return matrix.map(row =>
                 row.map(num => {
-                    let rounded = Number(num.toFixed(4));
-                    return rounded === 0 ? 0 : rounded;
+                    let rounded = Number(num.toFixed(4))
+                    return rounded === 0 ? 0 : rounded
                 }).join(' ')
-            ).join('\n');
+            ).join('\n')
         }
 
         function processMatrices() {
-            hideMessages();
+            hideMessages()
 
             try {
-                const textA = document.getElementById('inputA').value;
-                const matrixA = parseMatrix(textA, 'A');
-                const rowsA = matrixA.length;
-                const colsA = matrixA[0].length;
+                const textA = document.getElementById('inputA').value
+                const matrixA = parseMatrix(textA, 'A')
+                const rowsA = matrixA.length
+                const colsA = matrixA[0].length
 
-                let resultMatrix = null;
-                let titleText = '';
+                let resultMatrix = null
+                let titleText = ''
 
                 if (currentOperation !== 'inv') {
-                    const textB = document.getElementById('inputB').value;
-                    const matrixB = parseMatrix(textB, 'B');
-                    const rowsB = matrixB.length;
-                    const colsB = matrixB[0].length;
+                    const textB = document.getElementById('inputB').value
+                    const matrixB = parseMatrix(textB, 'B')
+                    const rowsB = matrixB.length
+                    const colsB = matrixB[0].length
 
                     if (currentOperation === 'add' || currentOperation === 'sub') {
                         if (rowsA !== rowsB || colsA !== colsB) {
-                            throw new Error(`Математическая ошибка: Для сложения/вычитания матрицы должны быть одинакового размера! (А: ${rowsA}x${colsA}, В: ${rowsB}x${colsB})`);
+                            throw new Error(`Математическая ошибка: Для сложения/вычитания матрицы должны быть одинакового размера! (А: ${rowsA}x${colsA}, В: ${rowsB}x${colsB})`)
                         }
                         if (currentOperation === 'add') {
-                            resultMatrix = sum(matrixA, matrixB);
-                            titleText = 'Результат сложения (A + B):';
+                            resultMatrix = sum(matrixA, matrixB)
+                            titleText = 'Результат сложения (A + B):'
                         } else {
-                            resultMatrix = minis(matrixA, matrixB);
-                            titleText = 'Результат вычитания (A - B):';
+                            resultMatrix = minis(matrixA, matrixB)
+                            titleText = 'Результат вычитания (A - B):'
                         }
                     }
 
                     if (currentOperation === 'mult') {
                         if (colsA !== rowsB) {
-                            throw new Error(`Математическая ошибка: Количество столбцов матрицы А (${colsA}) должно быть равно количеству строк матрицы В (${rowsB})!`);
+                            throw new Error(`Математическая ошибка: Количество столбцов матрицы А (${colsA}) должно быть равно количеству строк матрицы В (${rowsB})!`)
                         }
-                        resultMatrix = mul(matrixA, matrixB);
-                        titleText = 'Результат умножения (A * B):';
+                        resultMatrix = mul(matrixA, matrixB)
+                        titleText = 'Результат умножения (A * B):'
                     }
                 } else {
                     if (rowsA !== colsA) {
-                        throw new Error(`Математическая ошибка: Обратная матрица существует только для КВАДРАТНЫХ матриц! (Размер А: ${rowsA}x${colsA})`);
+                        throw new Error(`Математическая ошибка: Обратная матрица существует только для КВАДРАТНЫХ матриц! (Размер А: ${rowsA}x${colsA})`)
                     }
-                    resultMatrix = inverse(matrixA);
-                    titleText = `Определитель матрицы A = ${opred(matrixA)}`;
+                    resultMatrix = inverse(matrixA)
+                    titleText = `Определитель матрицы A = ${opred(matrixA)}`
                 }
 
-                showSuccess(titleText, formatMatrixHTML(resultMatrix));
+                showSuccess(titleText, formatMatrixHTML(resultMatrix))
 
             } catch (error) {
-                showError(error.message);
+                showError(error.message)
             }
         }
 
         function showError(msg) {
-            const errDiv = document.getElementById('errorMessage');
-            errDiv.innerText = msg;
-            errDiv.style.display = 'block';
+            const errDiv = document.getElementById('errorMessage')
+            errDiv.innerText = msg
+            errDiv.style.display = 'block'
         }
 
         function showSuccess(title, matrixText) {
-            document.getElementById('successTitle').innerText = title;
-            document.getElementById('outputResult').value = matrixText;
-            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('successTitle').innerText = title
+            document.getElementById('outputResult').value = matrixText
+            document.getElementById('successMessage').style.display = 'block'
         }
 
         function hideMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none'
+            document.getElementById('successMessage').style.display = 'none'
         }
     </script>
 </body>
